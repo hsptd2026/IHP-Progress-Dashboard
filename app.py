@@ -876,7 +876,7 @@ html_template = """
             mapInstance = L.map('map', { zoomControl: true, attributionControl: false }).setView([7.8731, 80.7718], 7.5);
             
             // ESRI World Navigation Dark Blue Basemap
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            L.tileLayer('https://api.maptiler.com/tiles/satellite-night/?key=fUTucmIPXiiP83MTzMn7#0.8/6.36021/1.78615', {
                 maxZoom: 18,
                 attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
             }).addTo(mapInstance);
