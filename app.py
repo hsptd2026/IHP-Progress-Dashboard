@@ -387,23 +387,23 @@ html_template = """
             box-shadow: 0 0 8px #94a3b8, 0 0 16px #94a3b8;
             animation: pulse-slate 2s infinite;
         }
-        /* Stage 1: NBRI 1st Report Issued only - Royal Blue */
+        /* Stage 1: NBRI 1st Report Issued only - Royal Red */
         .glowing-pin.stage-1 {
-            background: #2563eb;
+            background: #eb2528;
             border: 2px solid rgba(255,255,255,0.9);
             box-shadow: 0 0 10px #2563eb, 0 0 22px #2563eb;
             animation: pulse-stage1 2s infinite;
         }
-        /* Stage 2: NBRI 1st Report Issued + BOD Completed - Hot Pink/Magenta */
+        /* Stage 2: NBRI 1st Report Issued + BOD Completed - Hot Blue/Magenta */
         .glowing-pin.stage-2 {
-            background: #ec4899;
+            background: #48e9ec;
             border: 2px solid rgba(255,255,255,0.9);
             box-shadow: 0 0 10px #ec4899, 0 0 22px #ec4899;
             animation: pulse-stage2 2s infinite;
         }
-        /* Stage 3: NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued - Vivid Gold */
+        /* Stage 3: NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued - Green */
         .glowing-pin.stage-3 {
-            background: #facc15;
+            background: #95ec48;
             border: 2px solid rgba(255,255,255,0.9);
             box-shadow: 0 0 10px #facc15, 0 0 22px #facc15;
             animation: pulse-stage3 2s infinite;
