@@ -592,7 +592,8 @@ html_template = """
                                     <th class="py-3 px-3 text-right">Units</th>
                                     <th class="py-3 px-3 text-center">1st Report</th>
                                     <th class="py-3 px-3 text-center">BOD</th>
-                                    <th class="py-3 px-3 text-center">Report Link</th>
+                                    <th class="py-3 px-3 text-center">Conceptual Plan</th>
+                                    <th class="py-3 px-3 text-center">Report Issued</th>
                                 </tr>
                             </thead>
                             <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium"></tbody>
@@ -884,7 +885,7 @@ html_template = """
                 if (typeof rawUnits === 'string') rawUnits = rawUnits.replace(/[^0-9]/g, '');
                 const units = parseInt(rawUnits) || 0;
 
-                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'Yes').trim();
+                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'No').trim();
                 const reportYear = r['NBRI 1st Report - Year '] || r['NBRI 1st Report - Year'] || '2026';
                 const bodCompleted = (r['BOD Completed'] || 'No').trim();
                 const bodMarkedOnGround = (r['BOD Marked on Ground'] || r['BOD Morked on Ground'] || 'No').trim();
@@ -1264,8 +1265,13 @@ html_template = """
                 
                 tr.onclick = () => selectSiteRow(row);
 
-                let reportLinkHTML = row.reportLink 
-                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/40 border border-fuchsia-500/30 text-[11px] font-semibold transition"><i class="fa-solid fa-file-pdf"></i> View Link</a>`
+                const conceptualPlanYes = (row.conceptualDesign || '').trim().toLowerCase() === 'yes';
+                let conceptualPlanHTML = conceptualPlanYes
+                    ? `<span class="text-emerald-400 font-semibold">Yes</span>`
+                    : `<span class="text-slate-500">${row.conceptualDesign || 'No'}</span>`;
+
+                let reportIssuedHTML = row.reportLink 
+                    ? `<span class="text-emerald-400 font-semibold">Yes</span>`
                     : `<span class="text-slate-600 text-[10px]">N/A</span>`;
 
                 tr.innerHTML = `
@@ -1277,7 +1283,8 @@ html_template = """
                     <td class="py-3 px-3 text-right font-bold text-cyan-400">${row.units}</td>
                     <td class="py-3 px-3 text-center">${row.reportIssued}</td>
                     <td class="py-3 px-3 text-center">${row.bodCompleted}</td>
-                    <td class="py-3 px-3 text-center">${reportLinkHTML}</td>
+                    <td class="py-3 px-3 text-center">${conceptualPlanHTML}</td>
+                    <td class="py-3 px-3 text-center">${reportIssuedHTML}</td>
                 `;
                 tbody.appendChild(tr);
             });
