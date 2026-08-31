@@ -416,7 +416,7 @@ html_template = """
                 </div>
             </div>
 
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-fuchsia-500/60 transition shadow-lg hover:shadow-fuchsia-500/10">
+            <div id="kpi-card-report" onclick="openStatusSiteList('report')" class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-fuchsia-500/60 transition shadow-lg hover:shadow-fuchsia-500/10 cursor-pointer">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">NBRI 1st Report Issued</span>
                     <div class="w-9 h-9 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400 shadow-md shadow-fuchsia-500/20">
@@ -441,7 +441,7 @@ html_template = """
                 </div>
             </div>
 
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-purple-500/60 transition shadow-lg hover:shadow-purple-500/10">
+            <div id="kpi-card-conceptual" onclick="openStatusSiteList('conceptual')" class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-purple-500/60 transition shadow-lg hover:shadow-purple-500/10 cursor-pointer">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Conceptual Plan Issued</span>
                     <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-md shadow-purple-500/20">
@@ -466,7 +466,7 @@ html_template = """
                 </div>
             </div>
 
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/60 transition shadow-lg hover:shadow-emerald-500/10">
+            <div id="kpi-card-bod" onclick="openStatusSiteList('bod')" class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/60 transition shadow-lg hover:shadow-emerald-500/10 cursor-pointer">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">BOD Completed</span>
                     <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/20">
@@ -592,8 +592,7 @@ html_template = """
                                     <th class="py-3 px-3 text-right">Units</th>
                                     <th class="py-3 px-3 text-center">1st Report</th>
                                     <th class="py-3 px-3 text-center">BOD</th>
-                                    <th class="py-3 px-3 text-center">Conceptual Plan</th>
-                                    <th class="py-3 px-3 text-center">Report Issued</th>
+                                    <th class="py-3 px-3 text-center">Report Link</th>
                                 </tr>
                             </thead>
                             <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium"></tbody>
@@ -680,6 +679,65 @@ html_template = """
         </div>
 
     </main>
+
+    <!-- ==========================================
+         STATUS SITE LIST MODAL
+         ========================================== -->
+    <div id="status-site-modal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="glass-panel-glow w-full max-w-6xl max-h-[88vh] rounded-2xl overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-fuchsia-500/20">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <div id="status-modal-icon" class="w-10 h-10 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <div>
+                            <h2 id="status-modal-title" class="text-lg font-bold text-white">Site List</h2>
+                            <p id="status-modal-subtitle" class="text-xs text-slate-400">Sites matching this status</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="closeStatusSiteList()" class="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-red-500/20 border border-slate-700 hover:border-red-500/40 text-slate-400 hover:text-red-300 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="px-6 py-4 border-b border-slate-800/70">
+                <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                        <input id="status-site-search" type="text" placeholder="Search site, district or division..." class="w-full pl-9 pr-4 py-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:border-fuchsia-500/60 focus:outline-none">
+                    </div>
+                    <div id="status-site-count" class="text-xs font-semibold text-fuchsia-300 whitespace-nowrap">0 sites</div>
+                </div>
+            </div>
+
+            <div class="overflow-auto max-h-[62vh]">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 z-10 bg-[#15122b] border-b border-fuchsia-500/20">
+                        <tr>
+                            <th class="py-3 px-4 text-[10px] uppercase tracking-wider text-slate-500">#</th>
+                            <th class="py-3 px-4 text-[10px] uppercase tracking-wider text-slate-500">Site / Estate</th>
+                            <th class="py-3 px-4 text-[10px] uppercase tracking-wider text-slate-500">District</th>
+                            <th class="py-3 px-4 text-[10px] uppercase tracking-wider text-slate-500">Division</th>
+                            <th class="py-3 px-4 text-[10px] uppercase tracking-wider text-slate-500 text-right">Units</th>
+                            <th class="py-3 px-4 text-[10px] uppercase tracking-wider text-slate-500 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="status-site-table-body"></tbody>
+                </table>
+                <div id="status-site-empty" class="hidden text-center py-16">
+                    <i class="fa-solid fa-folder-open text-3xl text-slate-700 mb-3"></i>
+                    <p class="text-sm text-slate-500">No sites found.</p>
+                </div>
+            </div>
+
+            <div class="px-6 py-3 border-t border-slate-800/70 flex justify-between items-center">
+                <span class="text-[10px] text-slate-500">Click a site to locate it on the map</span>
+                <button onclick="closeStatusSiteList()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 transition">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         window.currentUser = { name: "User" };
@@ -885,7 +943,7 @@ html_template = """
                 if (typeof rawUnits === 'string') rawUnits = rawUnits.replace(/[^0-9]/g, '');
                 const units = parseInt(rawUnits) || 0;
 
-                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'No').trim();
+                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'Yes').trim();
                 const reportYear = r['NBRI 1st Report - Year '] || r['NBRI 1st Report - Year'] || '2026';
                 const bodCompleted = (r['BOD Completed'] || 'No').trim();
                 const bodMarkedOnGround = (r['BOD Marked on Ground'] || r['BOD Morked on Ground'] || 'No').trim();
@@ -992,6 +1050,11 @@ html_template = """
             updateDistrictChart();
             updateCharts();
             renderMainTable();
+
+            // Keep the KPI status list synchronized with active dashboard filters.
+            if (currentStatusListType) {
+                renderStatusSiteList();
+            }
         }
 
         function updateKPIs() {
@@ -1265,13 +1328,8 @@ html_template = """
                 
                 tr.onclick = () => selectSiteRow(row);
 
-                const conceptualPlanYes = (row.conceptualDesign || '').trim().toLowerCase() === 'yes';
-                let conceptualPlanHTML = conceptualPlanYes
-                    ? `<span class="text-emerald-400 font-semibold">Yes</span>`
-                    : `<span class="text-slate-500">${row.conceptualDesign || 'No'}</span>`;
-
-                let reportIssuedHTML = row.reportLink 
-                    ? `<span class="text-emerald-400 font-semibold">Yes</span>`
+                let reportLinkHTML = row.reportLink 
+                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/40 border border-fuchsia-500/30 text-[11px] font-semibold transition"><i class="fa-solid fa-file-pdf"></i> View Link</a>`
                     : `<span class="text-slate-600 text-[10px]">N/A</span>`;
 
                 tr.innerHTML = `
@@ -1283,8 +1341,7 @@ html_template = """
                     <td class="py-3 px-3 text-right font-bold text-cyan-400">${row.units}</td>
                     <td class="py-3 px-3 text-center">${row.reportIssued}</td>
                     <td class="py-3 px-3 text-center">${row.bodCompleted}</td>
-                    <td class="py-3 px-3 text-center">${conceptualPlanHTML}</td>
-                    <td class="py-3 px-3 text-center">${reportIssuedHTML}</td>
+                    <td class="py-3 px-3 text-center">${reportLinkHTML}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1401,6 +1458,165 @@ html_template = """
             renderDiscussionThread();
         }
 
+        // ==========================================
+        // CLICKABLE KPI STATUS SITE LIST
+        // ==========================================
+
+        let currentStatusListType = null;
+
+        function normalizeStatus(value) {
+            return String(value ?? '').trim().toLowerCase();
+        }
+
+        function openStatusSiteList(type) {
+            currentStatusListType = type;
+
+            const modal = document.getElementById('status-site-modal');
+            const title = document.getElementById('status-modal-title');
+            const subtitle = document.getElementById('status-modal-subtitle');
+            const icon = document.getElementById('status-modal-icon');
+            const search = document.getElementById('status-site-search');
+
+            if (!modal || !title || !subtitle || !icon) return;
+
+            if (type === 'report') {
+                title.textContent = 'NBRI 1st Report Issued';
+                subtitle.textContent = 'Sites where the NBRI 1st Report has been issued';
+                icon.className = 'w-10 h-10 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400';
+                icon.innerHTML = '<i class="fa-solid fa-file-shield"></i>';
+            } else if (type === 'conceptual') {
+                title.textContent = 'Conceptual Plan Issued';
+                subtitle.textContent = 'Sites where the conceptual plan has been completed';
+                icon.className = 'w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400';
+                icon.innerHTML = '<i class="fa-solid fa-sitemap"></i>';
+            } else if (type === 'bod') {
+                title.textContent = 'BOD Completed';
+                subtitle.textContent = 'Sites where BOD clearance has been completed';
+                icon.className = 'w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400';
+                icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            }
+
+            if (search) search.value = '';
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            renderStatusSiteList();
+        }
+
+        function closeStatusSiteList() {
+            const modal = document.getElementById('status-site-modal');
+            if (!modal) return;
+
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentStatusListType = null;
+        }
+
+        function getStatusSites(type) {
+            const sourceData = Array.isArray(filteredData) ? filteredData : [];
+
+            if (type === 'report') {
+                return sourceData.filter(site => normalizeStatus(site.reportIssued) === 'yes');
+            }
+
+            if (type === 'conceptual') {
+                return sourceData.filter(site => normalizeStatus(site.conceptualDesign).includes('completed'));
+            }
+
+            if (type === 'bod') {
+                return sourceData.filter(site => normalizeStatus(site.bodCompleted) === 'yes');
+            }
+
+            return [];
+        }
+
+        function renderStatusSiteList() {
+            const tbody = document.getElementById('status-site-table-body');
+            const countLabel = document.getElementById('status-site-count');
+            const emptyMessage = document.getElementById('status-site-empty');
+            const searchInput = document.getElementById('status-site-search');
+
+            if (!tbody || !currentStatusListType) return;
+
+            let sites = getStatusSites(currentStatusListType);
+            const searchValue = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            if (searchValue) {
+                sites = sites.filter(site => {
+                    const estate = normalizeStatus(site.estate);
+                    const district = normalizeStatus(site.district);
+                    const division = normalizeStatus(site.division);
+                    const region = normalizeStatus(site.region);
+                    return estate.includes(searchValue) ||
+                           district.includes(searchValue) ||
+                           division.includes(searchValue) ||
+                           region.includes(searchValue);
+                });
+            }
+
+            sites.sort((a, b) =>
+                String(a.estate || '').localeCompare(
+                    String(b.estate || ''),
+                    undefined,
+                    { sensitivity: 'base' }
+                )
+            );
+
+            if (countLabel) {
+                countLabel.textContent = `${sites.length} site${sites.length === 1 ? '' : 's'}`;
+            }
+
+            tbody.innerHTML = '';
+
+            if (sites.length === 0) {
+                if (emptyMessage) emptyMessage.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyMessage) emptyMessage.classList.add('hidden');
+
+            sites.forEach((site, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-slate-800/40 hover:bg-fuchsia-950/30 cursor-pointer transition';
+                tr.addEventListener('click', function() {
+                    closeStatusSiteList();
+                    selectSiteRow(site);
+                });
+
+                let statusText = 'Completed';
+                if (currentStatusListType === 'report') statusText = 'Issued';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-xs font-mono text-slate-500">${index + 1}</td>
+                    <td class="py-3 px-4">
+                        <div class="font-bold text-fuchsia-300 text-sm">${escapeHTML(site.estate || 'Unnamed Site')}</div>
+                        <div class="text-[10px] text-slate-500 mt-0.5">Site #${escapeHTML(site.sno ?? '-')}</div>
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-300">${escapeHTML(site.district || '-')}</td>
+                    <td class="py-3 px-4 text-xs text-slate-400">${escapeHTML(site.division || '-')}</td>
+                    <td class="py-3 px-4 text-right text-xs font-bold text-cyan-400">${Number(site.units || 0).toLocaleString()}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] font-semibold">
+                            <i class="fa-solid fa-circle-check text-[9px]"></i>
+                            ${statusText}
+                        </span>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function escapeHTML(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         function setupEventListeners() {
             document.getElementById('filter-region').addEventListener('change', applyFilters);
             document.getElementById('filter-district').addEventListener('change', applyFilters);
@@ -1408,6 +1624,28 @@ html_template = """
             document.getElementById('filter-rpc').addEventListener('change', applyFilters);
             document.getElementById('search-input').addEventListener('input', applyFilters);
             document.getElementById('registry-search-input').addEventListener('input', handleRegistrySearch);
+
+            const statusSearch = document.getElementById('status-site-search');
+            if (statusSearch) {
+                statusSearch.addEventListener('input', renderStatusSiteList);
+            }
+
+            // Close the status list with Escape.
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeStatusSiteList();
+                }
+            });
+
+            // Close when the dark overlay itself is clicked.
+            const modal = document.getElementById('status-site-modal');
+            if (modal) {
+                modal.addEventListener('click', function(event) {
+                    if (event.target === modal) {
+                        closeStatusSiteList();
+                    }
+                });
+            }
         }
 
         function handleAIPress(e) { if (e.key === 'Enter') sendAIMessage(); }
