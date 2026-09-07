@@ -491,7 +491,7 @@ html_template = """
                 </div>
             </div>
 
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-orange-500/60 transition shadow-lg hover:shadow-orange-500/10">
+            <div id="kpi-card-report2" onclick="openStatusSiteList('report2')" class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-orange-500/60 transition shadow-lg hover:shadow-orange-500/10 cursor-pointer">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">NBRI 2nd Report Issued</span>
                     <div class="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shadow-md shadow-orange-500/20">
@@ -943,14 +943,14 @@ html_template = """
                 if (typeof rawUnits === 'string') rawUnits = rawUnits.replace(/[^0-9]/g, '');
                 const units = parseInt(rawUnits) || 0;
 
-                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'Yes').trim();
+                const reportIssued = String(r['NBRI 1st Report - Issued'] ?? r['NBRI 1st Report Issued'] ?? '').trim();
                 const reportYear = r['NBRI 1st Report - Year '] || r['NBRI 1st Report - Year'] || '2026';
-                const bodCompleted = (r['BOD Completed'] || 'No').trim();
+                const bodCompleted = String(r['BOD Completed'] ?? '').trim();
                 const bodMarkedOnGround = (r['BOD Marked on Ground'] || r['BOD Morked on Ground'] || 'No').trim();
                 const perimeterSurvey = r['Perimeter Survey'] || 'Yes';
                 const droneSurvey = r['Drone Survey'] || 'Completed';
-                const conceptualDesign = (r['NBRI Conceptual Design'] || 'In Progress').trim();
-                const report2Issued = (r['NBRI 2nd Report - Issued'] || r['NBRI 2nd Report Issued'] || 'No').trim();
+                const conceptualDesign = String(r['NBRI Conceptual Design'] ?? '').trim();
+                const report2Issued = String(r['NBRI 2nd Report - Issued'] ?? r['NBRI 2nd Report Issued'] ?? '').trim();
                 const report2Year = r['NBRI 2nd Report - Year '] || r['NBRI 2nd Report - Year'] || '';
 
                 const parseUnitsField = (val) => {
@@ -1060,15 +1060,25 @@ html_template = """
         function updateKPIs() {
             const totalSites = filteredData.length;
             const totalUnits = filteredData.reduce((acc, curr) => acc + curr.units, 0);
-            const reportIssuedCount = filteredData.filter(d => d.reportIssued.toLowerCase() === 'yes').length;
-            const bodCompletedCount = filteredData.filter(d => d.bodCompleted.toLowerCase() === 'yes').length;
-            const conceptualIssuedCount = filteredData.filter(d => (d.conceptualDesign || '').toLowerCase().includes('completed')).length;
-            const report2IssuedCount = filteredData.filter(d => d.report2Issued.toLowerCase() === 'yes').length;
+            const isYes = value => normalizeStatus(value) === 'yes';
+            const isConceptCompleted = value => normalizeStatus(value).includes('completed');
 
-            const report1UnitsSum = filteredData.reduce((acc, curr) => acc + (curr.report1Units || 0), 0);
-            const conceptualUnitsSum = filteredData.reduce((acc, curr) => acc + (curr.conceptualUnits || 0), 0);
-            const report2UnitsSum = filteredData.reduce((acc, curr) => acc + (curr.report2Units || 0), 0);
-            const bodMarkedCount = filteredData.filter(d => (d.bodMarkedOnGround || '').toLowerCase() === 'yes').length;
+            const reportIssuedCount = filteredData.filter(d => isYes(d.reportIssued)).length;
+            const bodCompletedCount = filteredData.filter(d => isYes(d.bodCompleted)).length;
+            const conceptualIssuedCount = filteredData.filter(d => isConceptCompleted(d.conceptualDesign)).length;
+            const report2IssuedCount = filteredData.filter(d => isYes(d.report2Issued)).length;
+
+            // Only sum units belonging to records that actually have the relevant status.
+            const report1UnitsSum = filteredData
+                .filter(d => isYes(d.reportIssued))
+                .reduce((acc, curr) => acc + (curr.report1Units || 0), 0);
+            const conceptualUnitsSum = filteredData
+                .filter(d => isConceptCompleted(d.conceptualDesign))
+                .reduce((acc, curr) => acc + (curr.conceptualUnits || 0), 0);
+            const report2UnitsSum = filteredData
+                .filter(d => isYes(d.report2Issued))
+                .reduce((acc, curr) => acc + (curr.report2Units || 0), 0);
+            const bodMarkedCount = filteredData.filter(d => isYes(d.bodMarkedOnGround)).length;
 
             const reportPct = totalSites > 0 ? Math.round((reportIssuedCount / totalSites) * 100) : 0;
             const bodPct = totalSites > 0 ? Math.round((bodCompletedCount / totalSites) * 100) : 0;
@@ -1494,6 +1504,11 @@ html_template = """
                 subtitle.textContent = 'Sites where BOD clearance has been completed';
                 icon.className = 'w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400';
                 icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            } else if (type === 'report2') {
+                title.textContent = 'NBRI 2nd Report Issued';
+                subtitle.textContent = 'Sites where the NBRI 2nd Report has been issued';
+                icon.className = 'w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400';
+                icon.innerHTML = '<i class="fa-solid fa-file-circle-check"></i>';
             }
 
             if (search) search.value = '';
@@ -1526,6 +1541,10 @@ html_template = """
 
             if (type === 'bod') {
                 return sourceData.filter(site => normalizeStatus(site.bodCompleted) === 'yes');
+            }
+
+            if (type === 'report2') {
+                return sourceData.filter(site => normalizeStatus(site.report2Issued) === 'yes');
             }
 
             return [];
@@ -1585,7 +1604,7 @@ html_template = """
                 });
 
                 let statusText = 'Completed';
-                if (currentStatusListType === 'report') statusText = 'Issued';
+                if (currentStatusListType === 'report' || currentStatusListType === 'report2') statusText = 'Issued';
 
                 tr.innerHTML = `
                     <td class="py-3 px-4 text-xs font-mono text-slate-500">${index + 1}</td>
