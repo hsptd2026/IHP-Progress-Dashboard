@@ -592,7 +592,8 @@ html_template = """
                                     <th class="py-3 px-3 text-right">Units</th>
                                     <th class="py-3 px-3 text-center">1st Report</th>
                                     <th class="py-3 px-3 text-center">BOD</th>
-                                    <th class="py-3 px-3 text-center">Report Link</th>
+                                    <th class="py-3 px-3 text-center">Conceptual Plan</th>
+                                    <th class="py-3 px-3 text-center">2nd Report</th>
                                 </tr>
                             </thead>
                             <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium"></tbody>
@@ -962,8 +963,17 @@ html_template = """
                 const conceptualUnits = parseUnitsField(r['NBRI Conceptual Design - Units']);
                 const report2Units = parseUnitsField(r['NBRI 2nd Report - Units']);
                 
-                const reportLinkRaw = r['NBRI 1st Report - Link'] || r['Report Link'] || r['Link'] || '';
-                const reportLink = formatReportURL(reportLinkRaw, estate);
+                // Use only exact links stored in the Progress Tracker / Google Sheet.
+                // No guessed or Google-search URLs are created.
+                const reportLinkRaw = firstNonEmptyField(r, ['NBRI 1st Report - Link', 'NBRI 1st Report Link']);
+                const bodLinkRaw = firstNonEmptyField(r, ['BOD Completed - Link', 'BOD Completed Link', 'BOD - Link', 'BOD Link']);
+                const conceptualLinkRaw = firstNonEmptyField(r, ['NBRI Conceptual Design - Link', 'NBRI Conceptual Design Link', 'Conceptual Plan - Link', 'Conceptual Plan Link', 'Conceptual Design - Link', 'Conceptual Design Link']);
+                const report2LinkRaw = firstNonEmptyField(r, ['NBRI 2nd Report - Link', 'NBRI 2nd Report Link']);
+
+                const reportLink = normalizeExactURL(reportLinkRaw);
+                const bodLink = normalizeExactURL(bodLinkRaw);
+                const conceptualLink = normalizeExactURL(conceptualLinkRaw);
+                const report2Link = normalizeExactURL(report2LinkRaw);
 
                 let baseCoords = districtCoordinates[district] || { lat: 6.68, lng: 80.39 };
                 let lat = parseFloat(r['Lat'] || r['Latitude']) || (baseCoords.lat + (Math.random() - 0.5) * 0.12);
@@ -972,7 +982,12 @@ html_template = """
                 return { 
                     sno: idx + 1, region, district, estate, division, ia, rpc, units, 
                     reportIssued, reportYear, bodCompleted, bodMarkedOnGround, perimeterSurvey, droneSurvey, 
-                    conceptualDesign, report2Issued, report2Year, reportLinkRaw, reportLink, lat, lng,
+                    conceptualDesign, report2Issued, report2Year,
+                    reportLinkRaw, reportLink,
+                    bodLinkRaw, bodLink,
+                    conceptualLinkRaw, conceptualLink,
+                    report2LinkRaw, report2Link,
+                    lat, lng,
                     report1Units, conceptualUnits, report2Units
                 };
             });
@@ -981,18 +996,25 @@ html_template = """
             applyFilters();
         }
 
-        function formatReportURL(rawLink, estateName) {
-            if (!rawLink || rawLink.trim() === '' || rawLink.trim() === '-') return '';
-            let cleaned = rawLink.trim();
-
-            if (cleaned.toLowerCase().startsWith('http://') || cleaned.toLowerCase().startsWith('https://')) {
-                return cleaned;
+        function firstNonEmptyField(row, fieldNames) {
+            for (const fieldName of fieldNames) {
+                if (Object.prototype.hasOwnProperty.call(row, fieldName)) {
+                    const value = String(row[fieldName] ?? '').trim();
+                    if (value && value !== '-') return value;
+                }
             }
-            if (cleaned.includes('sharepoint.com') || cleaned.includes('drive.google.com') || cleaned.includes('docs.google.com')) {
+            return '';
+        }
+
+        function normalizeExactURL(rawLink) {
+            if (!rawLink) return '';
+            const cleaned = String(rawLink).trim();
+            if (!cleaned || cleaned === '-') return '';
+            if (new RegExp('^https?://', 'i').test(cleaned)) return cleaned;
+            if (new RegExp('^(www\\.|[\\w.-]+\\.(com|org|lk|net|gov|edu)(/|$))', 'i').test(cleaned)) {
                 return 'https://' + cleaned;
             }
-
-            return `https://www.google.com/search?q=NBRI+Report+${encodeURIComponent(cleaned)}+${encodeURIComponent(estateName)}`;
+            return '';
         }
 
         function populateFilterDropdowns() {
@@ -1143,9 +1165,19 @@ html_template = """
 
                 const marker = L.marker([site.lat, site.lng], { icon: customIcon });
                 
-                let linkButton = site.reportLink 
-                    ? `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 px-3 py-1.5 bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-400/40 rounded-lg text-xs font-semibold hover:bg-fuchsia-500/50 transition shadow-md shadow-fuchsia-500/20"><i class="fa-solid fa-file-pdf mr-1"></i> Open Official Report Link</a>`
-                    : '<span class="text-[10px] text-slate-400 mt-1 block">No direct report link attached</span>';
+                let linkButton = '';
+                if (site.reportLink) {
+                    linkButton += `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 mr-1 px-3 py-1.5 bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-400/40 rounded-lg text-xs font-semibold hover:bg-fuchsia-500/50 transition"><i class="fa-solid fa-file-pdf mr-1"></i> 1st Report</a>`;
+                }
+                if (site.bodLink) {
+                    linkButton += `<a href="${site.bodLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 mr-1 px-3 py-1.5 bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 rounded-lg text-xs font-semibold hover:bg-emerald-500/50 transition"><i class="fa-solid fa-circle-check mr-1"></i> BOD</a>`;
+                }
+                if (site.conceptualLink) {
+                    linkButton += `<a href="${site.conceptualLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 mr-1 px-3 py-1.5 bg-purple-500/30 text-purple-200 border border-purple-400/40 rounded-lg text-xs font-semibold hover:bg-purple-500/50 transition"><i class="fa-solid fa-sitemap mr-1"></i> Conceptual Plan</a>`;
+                }
+                if (site.report2Link) {
+                    linkButton += `<a href="${site.report2Link}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 mr-1 px-3 py-1.5 bg-orange-500/30 text-orange-200 border border-orange-400/40 rounded-lg text-xs font-semibold hover:bg-orange-500/50 transition"><i class="fa-solid fa-file-circle-check mr-1"></i> 2nd Report</a>`;
+                }
 
                 marker.bindPopup(`
                     <div style="font-family:'Plus Jakarta Sans', sans-serif; padding:4px;">
@@ -1161,7 +1193,7 @@ html_template = """
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>9. Drone Survey:</b> ${site.droneSurvey}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>10. Conceptual Design:</b> ${site.conceptualDesign}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>11. NBRI 2nd Report:</b> ${site.report2Issued}${site.report2Year ? ' (' + site.report2Year + ')' : ''}</p>
-                        ${linkButton}
+                        ${linkButton ? `<div style="margin-top:4px;">${linkButton}</div>` : ""}
                     </div>
                 `);
 
@@ -1338,20 +1370,17 @@ html_template = """
                 
                 tr.onclick = () => selectSiteRow(row);
 
-                let reportLinkHTML = row.reportLink 
-                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/40 border border-fuchsia-500/30 text-[11px] font-semibold transition"><i class="fa-solid fa-file-pdf"></i> View Link</a>`
-                    : `<span class="text-slate-600 text-[10px]">N/A</span>`;
-
                 tr.innerHTML = `
-                    <td class="py-3 px-3 font-mono text-slate-400">${row.sno}</td>
-                    <td class="py-3 px-3 font-semibold text-slate-200">${row.region}</td>
-                    <td class="py-3 px-3 text-slate-300">${row.district}</td>
-                    <td class="py-3 px-3 font-bold text-fuchsia-300">${row.estate}</td>
-                    <td class="py-3 px-3 text-slate-400">${row.division}</td>
-                    <td class="py-3 px-3 text-right font-bold text-cyan-400">${row.units}</td>
-                    <td class="py-3 px-3 text-center">${row.reportIssued}</td>
-                    <td class="py-3 px-3 text-center">${row.bodCompleted}</td>
-                    <td class="py-3 px-3 text-center">${reportLinkHTML}</td>
+                    <td class="py-3 px-3 font-mono text-slate-400">${escapeHTML(row.sno)}</td>
+                    <td class="py-3 px-3 font-semibold text-slate-200">${escapeHTML(row.region)}</td>
+                    <td class="py-3 px-3 text-slate-300">${escapeHTML(row.district)}</td>
+                    <td class="py-3 px-3 font-bold text-fuchsia-300">${escapeHTML(row.estate)}</td>
+                    <td class="py-3 px-3 text-slate-400">${escapeHTML(row.division)}</td>
+                    <td class="py-3 px-3 text-right font-bold text-cyan-400">${Number(row.units || 0).toLocaleString()}</td>
+                    <td class="py-3 px-3 text-center">${statusCell(row.reportIssued, row.reportLink, 'NBRI 1st Report')}</td>
+                    <td class="py-3 px-3 text-center">${statusCell(row.bodCompleted, row.bodLink, 'BOD')}</td>
+                    <td class="py-3 px-3 text-center">${statusCell(row.conceptualDesign, row.conceptualLink, 'Conceptual Plan')}</td>
+                    <td class="py-3 px-3 text-center">${statusCell(row.report2Issued, row.report2Link, 'NBRI 2nd Report')}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1627,6 +1656,23 @@ html_template = """
             });
         }
 
+        function statusCell(statusValue, link, label) {
+            const normalized = normalizeStatus(statusValue);
+            let displayValue = String(statusValue ?? '').trim();
+            if (!displayValue || displayValue === '-') displayValue = 'N/A';
+
+            const safeText = escapeHTML(displayValue);
+            const safeLabel = escapeHTML(label || 'Progress Tracker');
+            const exactLink = normalizeExactURL(link);
+
+            if (exactLink) {
+                // Keep the visible status as Yes/No/N/A; make it clickable only when an exact URL exists.
+                return `<a href="${escapeHTML(exactLink)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" title="Open exact ${safeLabel} link from the Progress Tracker" class="${normalized === 'yes' || normalized.includes('completed') ? 'text-fuchsia-300 hover:text-white hover:underline font-semibold' : 'text-slate-400 hover:text-white hover:underline'} transition">${safeText}</a>`;
+            }
+
+            return `<span class="${normalized === 'yes' || normalized.includes('completed') ? 'text-slate-200' : 'text-slate-500'}">${safeText}</span>`;
+        }
+
         function escapeHTML(value) {
             return String(value ?? '')
                 .replace(/&/g, '&amp;')
@@ -1688,7 +1734,7 @@ html_template = """
                 
                 const lowerMsg = msg.toLowerCase();
                 if (lowerMsg.includes('report') || lowerMsg.includes('link') || lowerMsg.includes('drive')) {
-                    aiReply = `All Google Drive / SharePoint report links are directly synchronized from the sheet under column 'NBRI 1st Report - Link'. Click any site row or map marker to launch the direct PDF report!`;
+                    aiReply = `Report and progress-tracker links are opened only when an exact link is available in the corresponding sheet column. The Registry shows the actual status (Yes/No/N/A) and makes that status clickable when a valid exact link exists.`;
                 } else if (lowerMsg.includes('highest') || lowerMsg.includes('max') || lowerMsg.includes('district')) {
                     aiReply = `Check out the new District-wise Housing Unit Chart above! It highlights districts with the highest concentration of housing units and active estate sites.`;
                 }
