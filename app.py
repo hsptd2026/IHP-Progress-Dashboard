@@ -479,13 +479,13 @@ html_template = """
                 </div>
                 <p class="text-[11px] text-slate-500 mt-2">Number of Sites</p>
                 <div class="border-t border-slate-800/80 my-3"></div>
-                <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center justify-between mb-1 cursor-pointer" onclick="event.stopPropagation(); openStatusSiteList('bod_marked')" title="Click to view sites where BOD is marked on the ground">
                     <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">BOD Marked on Ground</span>
                     <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                         <i class="fa-solid fa-map-location-dot"></i>
                     </div>
                 </div>
-                <div class="flex items-baseline gap-3">
+                <div class="flex items-baseline gap-3 cursor-pointer" onclick="event.stopPropagation(); openStatusSiteList('bod_marked')" title="Click to view sites where BOD is marked on the ground">
                     <h2 id="kpi-bod-marked" class="text-3xl font-extrabold text-emerald-300">--</h2>
                     <span class="text-xs text-emerald-300 font-semibold">Sites Marked</span>
                 </div>
@@ -1533,6 +1533,11 @@ html_template = """
                 subtitle.textContent = 'Sites where BOD clearance has been completed';
                 icon.className = 'w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400';
                 icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            } else if (type === 'bod_marked') {
+                title.textContent = 'BOD Marked on Ground';
+                subtitle.textContent = 'Sites where BOD has been marked on the ground';
+                icon.className = 'w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400';
+                icon.innerHTML = '<i class="fa-solid fa-map-location-dot"></i>';
             } else if (type === 'report2') {
                 title.textContent = 'NBRI 2nd Report Issued';
                 subtitle.textContent = 'Sites where the NBRI 2nd Report has been issued';
@@ -1570,6 +1575,13 @@ html_template = """
 
             if (type === 'bod') {
                 return sourceData.filter(site => normalizeStatus(site.bodCompleted) === 'yes');
+            }
+
+            if (type === 'bod_marked') {
+                return sourceData.filter(site => {
+                    const value = normalizeStatus(site.bodMarkedOnGround);
+                    return ['yes', 'y', 'true', 'completed', 'marked'].includes(value);
+                });
             }
 
             if (type === 'report2') {
@@ -1634,6 +1646,7 @@ html_template = """
 
                 let statusText = 'Completed';
                 if (currentStatusListType === 'report' || currentStatusListType === 'report2') statusText = 'Issued';
+                if (currentStatusListType === 'bod_marked') statusText = 'Marked on Ground';
 
                 tr.innerHTML = `
                     <td class="py-3 px-4 text-xs font-mono text-slate-500">${index + 1}</td>
