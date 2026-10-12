@@ -1656,7 +1656,7 @@ html_template = """
                     </td>
                     <td class="py-3 px-4 text-xs text-slate-300">${escapeHTML(site.district || '-')}</td>
                     <td class="py-3 px-4 text-xs text-slate-400">${escapeHTML(site.division || '-')}</td>
-                    <td class="py-3 px-4 text-right text-xs font-bold text-cyan-400">${Number(site.units || 0).toLocaleString()}</td>
+                    <td class="py-3 px-4 text-right text-xs font-bold text-cyan-400">${Number((currentStatusListType === 'report2' ? site.report2Units : site.units) || 0).toLocaleString()}</td>
                     <td class="py-3 px-4 text-center">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] font-semibold">
                             <i class="fa-solid fa-circle-check text-[9px]"></i>
